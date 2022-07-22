@@ -56,21 +56,17 @@ To run this project yourself you will need a PubNub account
 
 ### Building and Running
 
-1. You'll need to run the following commands from your terminal
+- Clone the Github repository
 
-1. Clone the Github repository
+`git clone https://github.com/PubNubDevelopers/GettingStarted-Kotlin-SDK-Tutorial.git`
 
-```bash
-git clone https://github.com/PubNubDevelopers/GettingStarted-Kotlin-SDK-Tutorial.git
-```
+- Navigate to the application directory
 
-1. Navigate to the application directory
+`cd GettingStarted-Kotlin-SDK-Tutorial`
 
-cd GettingStarted-Kotlin-SDK-Tutorial
+- Add your pub/sub keys to `gradle.properties`
 
-1. Add your pub/sub keys to `gradle.properties`
-
-1. Open the application in Android Studio and run on device or with an emulator.  Use multiple devices / emulators to simulate a more realistic chat experience.
+-  Open the application in Android Studio and run on device or with an emulator.  Use multiple devices / emulators to simulate a more realistic chat experience.
 
 ## Contributing
 Please fork the repository if you'd like to contribute. Pull requests are always welcome. 
