@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -22,6 +23,7 @@ import com.pubnub.api.PubNub
 import com.pubnub.api.UserId
 import com.pubnub.api.callbacks.Listener
 import com.pubnub.api.callbacks.SubscribeCallback
+import com.pubnub.api.enums.PNLogVerbosity
 import com.pubnub.api.models.consumer.PNStatus
 import com.pubnub.api.models.consumer.pubsub.PNMessageResult
 import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult
@@ -32,6 +34,8 @@ import com.pubnub.gettingStartedKotlinChat.ui.view.MainUI.MessageInput
 import com.pubnub.gettingStartedKotlinChat.ui.view.MainUI.MessageList
 import com.pubnub.gettingStartedKotlinChat.viewmodel.ChatViewModel
 import com.pubnub.gettingStartedKotlinChat.viewmodel.Message
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 
@@ -39,9 +43,9 @@ val simpleDateFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm:ss")
 
 class MainActivity : ComponentActivity() {
 
-
     //  Viewmodel for the chat pane state
     var chatViewModel: ChatViewModel = ChatViewModel()
+    private lateinit var messageListState: LazyListState;
 
     //  This application hardcodes a single channel name for simplicity.  Typically you would use separate channels for each
     //  type of conversation, e.g. each 1:1 chat would have its own channel, named appropriately.
@@ -75,6 +79,7 @@ class MainActivity : ComponentActivity() {
         val config = PNConfiguration(UserId(deviceUuid)).apply {
             publishKey = BuildConfig.PUBLISH_KEY
             subscribeKey = BuildConfig.SUBSCRIBE_KEY
+            logVerbosity = PNLogVerbosity.NONE
         }
         pubnub = PubNub(config)
 
@@ -90,7 +95,7 @@ class MainActivity : ComponentActivity() {
         //  The application UI is kept deliberately simple for readability.
         //  See ui.view.MainUI.kt for definitions of visual components.
         setContent {
-            val messageListState = rememberLazyListState()
+            messageListState = rememberLazyListState()
             val coroutineScope = rememberCoroutineScope()
             GettingStartedChatTheme {
                 Column {
@@ -268,6 +273,9 @@ class MainActivity : ComponentActivity() {
                     newMsg.timestamp = pnMessageResult.timetoken!!
                     chatViewModel.messages.add(newMsg)
 
+                    CoroutineScope(Dispatchers.Main).launch {
+                        messageListState.scrollToItem(chatViewModel.messages.size - 1)
+                    }
                 }
             }
 

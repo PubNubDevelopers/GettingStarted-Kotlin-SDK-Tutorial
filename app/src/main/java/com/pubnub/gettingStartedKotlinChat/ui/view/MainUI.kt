@@ -38,14 +38,13 @@ import com.pubnub.gettingStartedKotlinChat.R
 
 object MainUI {
 
-    fun getDateString(time: Long): String = simpleDateFormat.format(time)
-    fun resolveMemberName(chatViewModel: ChatViewModel, uuid: String): String {
+    private fun getDateString(time: Long): String = simpleDateFormat.format(time)
+    private fun resolveMemberName(chatViewModel: ChatViewModel, uuid: String): String {
         if (chatViewModel.memberNames.containsKey(uuid))
             return chatViewModel.memberNames.get(uuid).toString()
         else
             return uuid
     }
-
 
     @Composable
     fun InformationBar(viewModel: ChatViewModel, onSettingsClick: () -> Unit) {
