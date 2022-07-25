@@ -248,7 +248,6 @@ class MainActivity : ComponentActivity() {
         //  need to know EVERYONE in the room when the UI is first created.
         pubnub.hereNow(
             channels = listOf(groupChatChannel),
-            includeState = true,
             includeUUIDs = true
         ).async { result, status ->
             if (!status.error) {
