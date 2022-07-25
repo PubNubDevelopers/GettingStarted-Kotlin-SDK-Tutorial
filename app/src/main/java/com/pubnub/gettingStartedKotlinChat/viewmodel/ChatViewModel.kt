@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 class ChatViewModel : ViewModel() {
     var heading: String by mutableStateOf("Group Chat")
     var messages = mutableStateListOf<Message>()
-    var groupMemberUuids = mutableStateListOf<String>()
+    var groupMemberDeviceIds = mutableStateListOf<String>()
     var memberNames = mutableStateMapOf<String, String>()
 
 }

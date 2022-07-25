@@ -25,9 +25,11 @@ import com.pubnub.api.callbacks.Listener
 import com.pubnub.api.callbacks.SubscribeCallback
 import com.pubnub.api.enums.PNLogVerbosity
 import com.pubnub.api.models.consumer.PNStatus
+import com.pubnub.api.models.consumer.objects.membership.PNChannelWithCustom
 import com.pubnub.api.models.consumer.pubsub.PNMessageResult
 import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult
 import com.pubnub.api.models.consumer.pubsub.objects.PNObjectEventResult
+import com.pubnub.api.models.consumer.pubsub.objects.PNSetUUIDMetadataEventMessage
 import com.pubnub.gettingStartedKotlinChat.ui.theme.GettingStartedChatTheme
 import com.pubnub.gettingStartedKotlinChat.ui.view.MainUI.InformationBar
 import com.pubnub.gettingStartedKotlinChat.ui.view.MainUI.MessageInput
@@ -38,20 +40,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.util.*
 
-val simpleDateFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm:ss")
+val simpleDateFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm:ss", Locale.US)
 
 class MainActivity : ComponentActivity() {
 
     //  Viewmodel for the chat pane state
     var chatViewModel: ChatViewModel = ChatViewModel()
-    private lateinit var messageListState: LazyListState;
+    private lateinit var messageListState: LazyListState
 
     //  This application hardcodes a single channel name for simplicity.  Typically you would use separate channels for each
     //  type of conversation, e.g. each 1:1 chat would have its own channel, named appropriately.
     val groupChatChannel = "group_chat"
     val LOG_TAG = "PNChatApp"
-    private lateinit var deviceUuid: String
+    private lateinit var deviceId: String
     private lateinit var pubnub: PubNub
     private lateinit var mlistener: Listener
     private var mLaunchingSettings: Boolean = false
@@ -62,21 +65,23 @@ class MainActivity : ComponentActivity() {
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
                 val friendlyName = data?.getStringExtra("friendly_name")
-                replaceMemberName(deviceUuid, friendlyName.toString())
-                Log.d(LOG_TAG, "Received onResult")
+                //  The below line duplicates functionality from the object event callback but if the user
+                //  does not set 'user metadata events' in the portal, at least we update our own member name.
+                replaceMemberName(deviceId, friendlyName.toString())
+                Log.v(LOG_TAG, "Received onResult")
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //  Create a device-specific UUID to represent this device and user, so PubNub knows who is connecting.
+        //  Create a device-specific DeviceId to represent this device and user, so PubNub knows who is connecting.
         //  More info: https://support.pubnub.com/hc/en-us/articles/360051496532-How-do-I-set-the-UUID-
         //  All Android IDs are user-resettable but are still appropriate for use here.
-        deviceUuid = Settings.Secure.getString(this.contentResolver, Settings.Secure.ANDROID_ID)
+        deviceId = Settings.Secure.getString(this.contentResolver, Settings.Secure.ANDROID_ID)
 
         //  Create PubNub configuration and instantiate the PubNub object, used to communicate with PubNub
-        val config = PNConfiguration(UserId(deviceUuid)).apply {
+        val config = PNConfiguration(UserId(deviceId)).apply {
             publishKey = BuildConfig.PUBLISH_KEY
             subscribeKey = BuildConfig.SUBSCRIBE_KEY
             logVerbosity = PNLogVerbosity.NONE
@@ -107,15 +112,15 @@ class MainActivity : ComponentActivity() {
                         val startSettingsActivityIntent =
                             Intent(applicationContext, SettingsActivity::class.java)
 
-                        //  The friendly name is used in place of the UUID.  E.g. the user's name.
+                        //  The friendly name is used in place of the DeviceId.  E.g. the user's name.
                         startSettingsActivityIntent.putExtra(
                             "current_friendly_name",
-                            resolveFriendlyName(chatViewModel, deviceUuid)
+                            resolveFriendlyName(chatViewModel, deviceId)
                         )
                         //  Provide the Settings activity with everything it needs to communicate with PubNub
                         //  Using the same credentials as the Main Activity.  The PubNub object is not
                         //  Parcelable or Serializable, so we need to create a new one.
-                        startSettingsActivityIntent.putExtra("device_id", deviceUuid)
+                        startSettingsActivityIntent.putExtra("device_id", deviceId)
                         startSettingsActivityIntent.putExtra(
                             "subscribe_key",
                             BuildConfig.SUBSCRIBE_KEY
@@ -136,7 +141,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         //  List of messages received in the group
                         MessageList(
-                            deviceID = deviceUuid, viewModel = chatViewModel,
+                            deviceID = deviceId, viewModel = chatViewModel,
                             messageListState = messageListState
                         )
                     }
@@ -147,8 +152,8 @@ class MainActivity : ComponentActivity() {
                             //  Code that executes whenever the 'Send' button is pressed
                             val metaInfo = JsonObject()
 
-                            //  Attach our UUID as meta info to the message, this is useful in history to know who sent each message
-                            metaInfo.addProperty("uuid", deviceUuid)
+                            //  Attach our deviceId as meta info to the message, this is useful in history to know who sent each message
+                            metaInfo.addProperty("deviceId", deviceId)
 
                             //  Publish the message to PubNub using the pre-defined channel for this group chat
                             pubnub.publish(
@@ -161,11 +166,6 @@ class MainActivity : ComponentActivity() {
                                         LOG_TAG,
                                         "Message sent, timetoken: ${result!!.timetoken}"
                                     )
-                                    //  Once the message has been published, handle the result.  In this case scroll the message list
-                                    //  and log any errors.
-                                    coroutineScope.launch {
-                                        messageListState.animateScrollToItem(chatViewModel.messages.size)
-                                    }
                                 } else {
                                     Log.w(LOG_TAG, "Error while publishing")
                                     status.exception?.printStackTrace()
@@ -173,6 +173,19 @@ class MainActivity : ComponentActivity() {
                             }
                         }, onChange = {})
                 }
+            }
+        }
+
+        //  In order to receive object UUID events (in the addListener) it is required to set our
+        //  membership using the Object API.  This is a workaround - querying behaviour with server team.
+        pubnub.setMemberships(
+            channels = listOf(
+                PNChannelWithCustom(channel = groupChatChannel))
+        ).async { result, status ->
+            if (!status.error) {
+                Log.v(LOG_TAG, "Success while executing setMemberships")
+            } else {
+                Log.w(LOG_TAG, "Error while executing setMemberships")
             }
         }
 
@@ -189,11 +202,11 @@ class MainActivity : ComponentActivity() {
                 if (!status.error) {
                     //  Recreate the message and add it to the viewModel for display.  The Message class is also defined
                     //  under ui.viewmodel
-                    var newMsg = Message()
+                    val newMsg = Message()
                     newMsg.message = message.entry.asString
                     try {
-                        var metaInfo: JsonObject = message.meta as JsonObject
-                        newMsg.senderUuid = metaInfo.get("uuid").asString
+                        val metaInfo: JsonObject = message.meta as JsonObject
+                        newMsg.senderDeviceId = metaInfo.get("deviceId").asString
                     } catch (e: Exception) {
                     }
                     newMsg.timestamp = message.timetoken!!
@@ -229,7 +242,7 @@ class MainActivity : ComponentActivity() {
         //  Determine who is currently chatting in the channel.  I use an ArrayList in the viewModel to present this information
         //  on the UI, managed through a couple of addMember and removeMember methods
         //  I am definitely here
-        addMember(deviceUuid)
+        addMember(deviceId)
 
         //  PubNub has an API to determine who is in the room.  Use this call sparingly since you are only ever likely to
         //  need to know EVERYONE in the room when the UI is first created.
@@ -240,8 +253,8 @@ class MainActivity : ComponentActivity() {
         ).async { result, status ->
             if (!status.error) {
                 //  The API will return an array of occupants in the channel, defined by their
-                //  UUID.  This application will need to look up the friendly named defined for
-                //  each of these UUIDs (later)
+                //  ID.  This application will need to look up the friendly named defined for
+                //  each of these ID (later)
                 result?.channels?.get(groupChatChannel)?.occupants?.forEach { i ->
                     addMember(i.uuid)
                 }
@@ -267,9 +280,9 @@ class MainActivity : ComponentActivity() {
                 if (pnMessageResult.channel == groupChatChannel) {
                     Log.v(LOG_TAG, "Received message ${pnMessageResult.message}")
                     //  Display the message by adding it to the viewModel
-                    var newMsg = Message()
+                    val newMsg = Message()
                     newMsg.message = pnMessageResult.message.asString
-                    newMsg.senderUuid = pnMessageResult.publisher.toString()
+                    newMsg.senderDeviceId = pnMessageResult.publisher.toString()
                     newMsg.timestamp = pnMessageResult.timetoken!!
                     chatViewModel.messages.add(newMsg)
 
@@ -302,10 +315,10 @@ class MainActivity : ComponentActivity() {
                             )
                         } else {
                             pnPresenceEventResult.join?.forEach { userId ->
-                                addMember(userId);
+                                addMember(userId)
                             }
                             pnPresenceEventResult.leave?.forEach { userId ->
-                                removeMember(userId);
+                                removeMember(userId)
                             }
                         }
                     }
@@ -317,11 +330,14 @@ class MainActivity : ComponentActivity() {
             //  See: https://www.pubnub.com/docs/chat/sdks/users/setup
             //  Use this to be notified when other users change their friendly names
             override fun objects(pubnub: PubNub, objectEvent: PNObjectEventResult) {
-                Log.d(LOG_TAG, "objects callback")
-                //  todo implement this to receive updates when others change their friendly name
-                with(objectEvent.extractedMessage)
-                {
-
+                if (objectEvent.extractedMessage.type.equals("uuid")) {
+                    Log.d(LOG_TAG, "objects callback with " + objectEvent.extractedMessage)
+                    val extractedMessage: PNSetUUIDMetadataEventMessage =
+                        objectEvent.extractedMessage as PNSetUUIDMetadataEventMessage
+                    replaceMemberName(
+                        extractedMessage.data.id,
+                        extractedMessage.data.name.toString()
+                    )
                 }
             }
         }
@@ -344,44 +360,44 @@ class MainActivity : ComponentActivity() {
         pubnub.removeListener(mlistener)
     }
 
-    //  The mapping of UUIDs to friendly names is kept in a hashmap in the viewModel.
-    //  Return the friendly name for a given UUID
-    private fun resolveFriendlyName(chatViewModel: ChatViewModel, uuid: String): String {
-        if (chatViewModel.memberNames.containsKey(uuid))
-            return chatViewModel.memberNames.get(uuid).toString()
+    //  The mapping of device IDs to friendly names is kept in a hashmap in the viewModel.
+    //  Return the friendly name for a given Device Id
+    private fun resolveFriendlyName(chatViewModel: ChatViewModel, deviceId: String): String {
+        if (chatViewModel.memberNames.containsKey(deviceId))
+            return chatViewModel.memberNames.get(deviceId).toString()
         else
-            return uuid
+            return deviceId
     }
 
-    //  A UUID is present in the chat (as determined by either hereNow or the presence event)
+    //  A DeviceID is present in the chat (as determined by either hereNow or the presence event)
     //  Update our chat member list
-    fun addMember(uuid: String) {
-        if (!chatViewModel.groupMemberUuids.contains(uuid))
-            chatViewModel.groupMemberUuids.add(uuid)
-        lookupMemberName(uuid)
+    fun addMember(deviceId: String) {
+        if (!chatViewModel.groupMemberDeviceIds.contains(deviceId))
+            chatViewModel.groupMemberDeviceIds.add(deviceId)
+        lookupMemberName(deviceId)
     }
 
-    //  A UUID is absent from the chat (as determined by either hereNow or the presence event)
+    //  A Device ID is absent from the chat (as determined by either hereNow or the presence event)
     //  Update our chat member list
-    fun removeMember(uuid: String) {
-        if (chatViewModel.groupMemberUuids.contains(uuid))
-            chatViewModel.groupMemberUuids.remove(uuid)
+    fun removeMember(deviceId: String) {
+        if (chatViewModel.groupMemberDeviceIds.contains(deviceId))
+            chatViewModel.groupMemberDeviceIds.remove(deviceId)
     }
 
     //  The 'master record' for each device's friendly name is stored in PubNub object storage.
     //  This avoids the application defining its own server storage or trying to keep track of all
     //  friendly names on every device.  Since PubNub Objects understand the concept of a user name
     //  (along with other common fields like email and profileUrl), it makes the process straight forward
-    private fun lookupMemberName(uuid: String) {
-        //  Resolve the friendly name of the UUID
-        if (!chatViewModel.memberNames.containsKey(uuid)) {
+    private fun lookupMemberName(deviceId: String) {
+        //  Resolve the friendly name of the DeviceId
+        if (!chatViewModel.memberNames.containsKey(deviceId)) {
             pubnub.getUUIDMetadata(
-                uuid = uuid,
+                uuid = deviceId,
             ).async { result, status ->
                 if (!status.error) {
                     //  Add the user's name to the memberNames hashmap (part of the viewModel, so
                     //  the UI will update accordingly)
-                    chatViewModel.memberNames.put(uuid, result?.data?.name.toString())
+                    chatViewModel.memberNames.put(deviceId, result?.data?.name.toString())
                 } else {
                     Log.w(LOG_TAG, "Error while 'getUUIDMetadata'")
                 }
@@ -389,10 +405,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    //  Update the hashmap of UUID --> friendly name mappings.
+    //  Update the hashmap of DeviceId --> friendly name mappings.
     //  Used for when names CHANGE
-    private fun replaceMemberName(uuid: String, newName: String) {
-        chatViewModel.memberNames.put(uuid, newName)
+    private fun replaceMemberName(deviceId: String, newName: String) {
+        chatViewModel.memberNames.put(deviceId, newName)
     }
 
 }

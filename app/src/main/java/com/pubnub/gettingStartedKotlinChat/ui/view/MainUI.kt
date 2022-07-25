@@ -39,11 +39,11 @@ import com.pubnub.gettingStartedKotlinChat.R
 object MainUI {
 
     private fun getDateString(time: Long): String = simpleDateFormat.format(time)
-    private fun resolveMemberName(chatViewModel: ChatViewModel, uuid: String): String {
-        if (chatViewModel.memberNames.containsKey(uuid))
-            return chatViewModel.memberNames.get(uuid).toString()
+    private fun resolveMemberName(chatViewModel: ChatViewModel, deviceId: String): String {
+        if (chatViewModel.memberNames.containsKey(deviceId))
+            return chatViewModel.memberNames.get(deviceId).toString()
         else
-            return uuid
+            return deviceId
     }
 
     @Composable
@@ -57,14 +57,14 @@ object MainUI {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().padding(end = 20.dp)
                 ) {
-                    val memberUuids = viewModel.groupMemberUuids
+                    val memberDeviceIds = viewModel.groupMemberDeviceIds
                     var displayMembers = ""
-                    memberUuids.forEach { memberUuid ->
+                    memberDeviceIds.forEach { memberDeviceId ->
                         if (!displayMembers.equals(""))
                             displayMembers += ", "
-                        var memberName = memberUuid
-                        if (viewModel.memberNames.containsKey(memberUuid))
-                            memberName = viewModel.memberNames.get(memberUuid).toString()
+                        var memberName = memberDeviceId
+                        if (viewModel.memberNames.containsKey(memberDeviceId))
+                            memberName = viewModel.memberNames.get(memberDeviceId).toString()
                         displayMembers += memberName
                     }
                     var mDisplayMenu by remember { mutableStateOf(false) }
@@ -136,7 +136,7 @@ object MainUI {
     @Composable
     fun MessageView(chatViewModel: ChatViewModel, item: Message, deviceID: String) {
         var messageAlignment = Alignment.Start
-        if (item.senderUuid == deviceID) {
+        if (item.senderDeviceId == deviceID) {
             //  Message we sent
             messageAlignment = Alignment.End
         }
@@ -172,7 +172,7 @@ object MainUI {
                             Row()
                             {
                                 Text(
-                                    text = resolveMemberName(chatViewModel, item.senderUuid),
+                                    text = resolveMemberName(chatViewModel, item.senderDeviceId),
                                     style = MaterialTheme.typography.subtitle1,
                                     textAlign = TextAlign.Left
                                 )
@@ -263,11 +263,11 @@ object MainUI {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreviewMessageList() {
-    var sampleMessage = Message()
+    val sampleMessage = Message()
     sampleMessage.message = "This is a Test Message"
-    sampleMessage.senderUuid = "123"
+    sampleMessage.senderDeviceId = "123"
     sampleMessage.timestamp = 16584196619030000L
-    var sampleViewModel = ChatViewModel()
+    val sampleViewModel = ChatViewModel()
     sampleViewModel.memberNames.put("123", "Device 123")
     sampleViewModel.messages = mutableStateListOf(sampleMessage)
     val messageListState = rememberLazyListState()
@@ -278,10 +278,10 @@ fun DefaultPreviewMessageList() {
 @Preview(showBackground = true)
 @Composable
 fun HeadingPreview() {
-    var sampleViewModel = ChatViewModel()
+    val sampleViewModel = ChatViewModel()
     sampleViewModel.heading = "Group Chat"
     sampleViewModel.memberNames.put("123", "Device 123alsidjhsd asdfha sdfh askjdfh aslkjdhf ashdf askhjd fasuh dfasudh fashd flakshd faksl dhff oaishasdfasdfdfo asidd")
-    sampleViewModel.groupMemberUuids = mutableStateListOf("123")
+    sampleViewModel.groupMemberDeviceIds = mutableStateListOf("123")
 
     MainUI.InformationBar(sampleViewModel, {})
 }

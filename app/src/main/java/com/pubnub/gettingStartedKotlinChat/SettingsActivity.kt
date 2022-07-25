@@ -13,7 +13,7 @@ class SettingsActivity : ComponentActivity() {
     private val currentActivity = this
 
     //  The Settings Activity is used to define a friendly name for the current device.  This will
-    //  replace the machine-assigned UUID that the app is given at startup.
+    //  replace the machine-assigned DeviceId that the app is given at startup.
     //  Friendly names will be persisted in PubNub object storage (when the user presses save)
     //  For simplicity, please see the ui.view.SettingsUI.kt for the button handler code
     override fun onCreate(savedInstanceState: Bundle?) {
