@@ -100,7 +100,7 @@ object SettingsUI {
                             publishKey = mPublishKey
                             subscribeKey = mSubscribeKey
                         }
-                        //  Mapping of DeviceId to friendly name master record is PubNub object storage
+                        //  Mapping of DeviceId to friendly name.  Master record is PubNub object storage
                         //  https://www.pubnub.com/docs/sdks/kotlin/api-reference/objects
                         var pubnub = PubNub(config)
                         pubnub.setUUIDMetadata(

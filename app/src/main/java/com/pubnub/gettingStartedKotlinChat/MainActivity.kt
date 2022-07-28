@@ -177,7 +177,7 @@ class MainActivity : ComponentActivity() {
         }
 
         //  In order to receive object UUID events (in the addListener) it is required to set our
-        //  membership using the Object API.  This is a workaround - querying behaviour with server team.
+        //  membership using the Object API.
         pubnub.setMemberships(
             channels = listOf(
                 PNChannelWithCustom(channel = groupChatChannel))
@@ -252,8 +252,8 @@ class MainActivity : ComponentActivity() {
         ).async { result, status ->
             if (!status.error) {
                 //  The API will return an array of occupants in the channel, defined by their
-                //  ID.  This application will need to look up the friendly named defined for
-                //  each of these ID (later)
+                //  ID.  This application will need to look up the friendly name defined for
+                //  each of these IDs (later)
                 result?.channels?.get(groupChatChannel)?.occupants?.forEach { i ->
                     addMember(i.uuid)
                 }
@@ -325,7 +325,7 @@ class MainActivity : ComponentActivity() {
 
             }
 
-            //  Whenever Object meta data is changed, an Object event is recenved.
+            //  Whenever Object meta data is changed, an Object event is received.
             //  See: https://www.pubnub.com/docs/chat/sdks/users/setup
             //  Use this to be notified when other users change their friendly names
             override fun objects(pubnub: PubNub, objectEvent: PNObjectEventResult) {
@@ -383,7 +383,7 @@ class MainActivity : ComponentActivity() {
             chatViewModel.groupMemberDeviceIds.remove(deviceId)
     }
 
-    //  The 'master record' for each device's friendly name is stored in PubNub object storage.
+    //  The 'master record' for each device's friendly name is stored in PubNub Object storage.
     //  This avoids the application defining its own server storage or trying to keep track of all
     //  friendly names on every device.  Since PubNub Objects understand the concept of a user name
     //  (along with other common fields like email and profileUrl), it makes the process straight forward
