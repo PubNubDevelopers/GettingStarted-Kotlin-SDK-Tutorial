@@ -1,4 +1,4 @@
-# Tutorial: Getting Started Developing a Chat app with the Kotlin SDK
+# Tutorial: Get Started Developing a Chat app with the Kotlin SDK
 > Simple chat app to demonstrate the basic principles of creating a chat app with PubNub.  This app is written in Kotlin, targeting Android and uses the JetPack Compose library for the UI
 
 PubNub allows you to create chat apps from scratch or add them to your existing applications. You can focus on creating the best user experience while PubNub takes care of scalability, reliability, security, and global legislative compliance.
