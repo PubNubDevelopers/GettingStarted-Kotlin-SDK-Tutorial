@@ -210,6 +210,10 @@ class MainActivity : ComponentActivity() {
                             newMsg.timestamp = messageItem.timetoken
                             newMsg.senderDeviceId = messageItem.uuid.toString()
                             chatViewModel.messages.add(newMsg)
+
+                            //  This has the effect of showing the senders of the last messages as
+                            //  members of the current chat, this isn't quite accurate (as they might be
+                            //  offline) but for the purpose of this sample app, it's fine.
                             addMember(newMsg.senderDeviceId)
                         }
                     }
