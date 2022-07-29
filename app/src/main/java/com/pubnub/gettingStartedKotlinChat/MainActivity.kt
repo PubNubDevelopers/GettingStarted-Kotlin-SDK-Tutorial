@@ -24,8 +24,10 @@ import com.pubnub.api.UserId
 import com.pubnub.api.callbacks.Listener
 import com.pubnub.api.callbacks.SubscribeCallback
 import com.pubnub.api.enums.PNLogVerbosity
+import com.pubnub.api.models.consumer.PNBoundedPage
 import com.pubnub.api.models.consumer.PNStatus
-import com.pubnub.api.models.consumer.objects.membership.PNChannelWithCustom
+import com.pubnub.api.models.consumer.history.PNFetchMessageItem
+import com.pubnub.api.models.consumer.objects.membership.PNChannelMembership
 import com.pubnub.api.models.consumer.pubsub.PNMessageResult
 import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult
 import com.pubnub.api.models.consumer.pubsub.objects.PNObjectEventResult
@@ -180,7 +182,8 @@ class MainActivity : ComponentActivity() {
         //  membership using the Object API.
         pubnub.setMemberships(
             channels = listOf(
-                PNChannelWithCustom(channel = groupChatChannel))
+                PNChannelMembership.Partial(channelId = groupChatChannel)
+            )
         ).async { result, status ->
             if (!status.error) {
                 Log.v(LOG_TAG, "Success while executing setMemberships")
@@ -191,33 +194,30 @@ class MainActivity : ComponentActivity() {
 
         //  When the application is first loaded, it is common to load any recent chat messages so the user
         //  can get caught up with conversations they missed.  Every application will handle this differently
-        //  but here we just load the 12 most recent messages
-        pubnub.history(
-            channel = groupChatChannel,
-            includeTimetoken = true,
+        //  but here we just load the 8 most recent messages
+        pubnub.fetchMessages(
+            channels = listOf(groupChatChannel),
+            page = PNBoundedPage(limit = 8),
             includeMeta = true,
-            count = 12
+            includeUUID = true
         ).async { result, status ->
-            result?.messages?.forEach { message ->
-                if (!status.error) {
-                    //  Recreate the message and add it to the viewModel for display.  The Message class is also defined
-                    //  under ui.viewmodel
-                    val newMsg = Message()
-                    newMsg.message = message.entry.asString
-                    try {
-                        val metaInfo: JsonObject = message.meta as JsonObject
-                        newMsg.senderDeviceId = metaInfo.get("deviceId").asString
-                    } catch (e: Exception) {
+            if (!status.error) {
+                result!!.channels.forEach { (channel, messages) ->
+                    if (channel == groupChatChannel) {
+                        messages.forEach { messageItem: PNFetchMessageItem ->
+                            val newMsg = Message()
+                            newMsg.message = messageItem.message.asString
+                            newMsg.timestamp = messageItem.timetoken
+                            newMsg.senderDeviceId = messageItem.uuid.toString()
+                            chatViewModel.messages.add(newMsg)
+                            addMember(newMsg.senderDeviceId)
+                        }
                     }
-                    newMsg.timestamp = message.timetoken!!
-                    chatViewModel.messages.add(newMsg)
-
-                } else {
-                    Log.w(LOG_TAG, "Error while retrieving history")
                 }
+            } else {
+                Log.w(LOG_TAG, "Error while retrieving history")
             }
         }
-
     }
 
     //  This application is designed to unsubscribe from the channel when it goes to the background and re-subscribe

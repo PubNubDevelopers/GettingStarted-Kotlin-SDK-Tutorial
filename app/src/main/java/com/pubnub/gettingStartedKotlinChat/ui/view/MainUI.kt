@@ -193,7 +193,6 @@ object MainUI {
         }
     }
 
-
     @Composable
     fun MessageInput(
         placeholder: String = "Type Message",
