@@ -50,7 +50,7 @@ To run this project yourself you will need a PubNub account
 
 1. Enable the Persistence feature for your keyset
 
-1. Enable the Objects feature for your keyset.
+1. Enable the Objects feature for your keyset.  **Also enable 'user metadata events'**
 
 1. Copy the Publish and Subscribe keys and paste them into your app as specified in the next step.
 
