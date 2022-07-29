@@ -76,7 +76,7 @@ object MainUI {
                             .height(70.dp)
                             .width(70.dp)
                     )
-                    Column(modifier = Modifier.padding(start = 10.dp)) {
+                    Column(modifier = Modifier.padding(start = 10.dp).fillMaxWidth()) {
                         Row(
                             modifier = Modifier
                                 .padding(0.dp)
@@ -92,15 +92,13 @@ object MainUI {
                         Row()
                         {
                             Text(
-                                text = "Members: \n$displayMembers",
+                                text = "Members Online: \n$displayMembers",
                                 style = MaterialTheme.typography.body1,
                             )
                         }
 
                     }
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.End)
+                    Column(modifier = Modifier.defaultMinSize(100.dp))
                     {
                         IconButton(modifier = Modifier.requiredWidth(100.dp),
                             onClick = { mDisplayMenu = !mDisplayMenu }) {
@@ -276,7 +274,19 @@ fun DefaultPreviewMessageList() {
 @SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
-fun HeadingPreview() {
+fun HeadingPreviewShort() {
+    val sampleViewModel = ChatViewModel()
+    sampleViewModel.heading = "Group Chat"
+    sampleViewModel.memberNames.put("123", "Device 123")
+    sampleViewModel.groupMemberDeviceIds = mutableStateListOf("123")
+
+    MainUI.InformationBar(sampleViewModel, {})
+}
+
+@SuppressLint("UnrememberedMutableState")
+@Preview(showBackground = true)
+@Composable
+fun HeadingPreviewLong() {
     val sampleViewModel = ChatViewModel()
     sampleViewModel.heading = "Group Chat"
     sampleViewModel.memberNames.put("123", "Device 123alsidjhsd asdfha sdfh askjdfh aslkjdhf ashdf askhjd fasuh dfasudh fashd flakshd faksl dhff oaishasdfasdfdfo asidd")
