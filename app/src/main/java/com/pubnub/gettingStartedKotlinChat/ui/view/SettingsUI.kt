@@ -100,24 +100,9 @@ object SettingsUI {
                             publishKey = mPublishKey
                             subscribeKey = mSubscribeKey
                         }
-                        //  Mapping of DeviceId to friendly name.  Master record is PubNub object storage
-                        //  https://www.pubnub.com/docs/sdks/kotlin/api-reference/objects
-                        var pubnub = PubNub(config)
-                        pubnub.setUUIDMetadata(
-                            name = text.text
-                        ).async { result, status ->
-                            if (status.error) {
-                                Log.w(
-                                    LOG_TAG,
-                                    "Error setting UUID Metadata.  Status code: " + status.statusCode
-                                )
-                            } else if (result != null) {
-                                Log.d(
-                                    LOG_TAG,
-                                    "UUID Metadata successfully set to " + result.data?.name
-                                )
-                            }
-                        }
+
+                        //  TUTORIAL: STEP 3H CODE GOES HERE
+
                     }
                     //  Return focus back to the main activity
                     activity.finish()
