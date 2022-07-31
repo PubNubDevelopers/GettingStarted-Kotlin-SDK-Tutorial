@@ -141,27 +141,9 @@ class MainActivity : ComponentActivity() {
                         onSent =
                         { message ->
                             //  Code that executes whenever the 'Send' button is pressed
-                            val metaInfo = JsonObject()
 
-                            //  Attach our deviceId as meta info to the message, this is useful in history to know who sent each message
-                            metaInfo.addProperty("deviceId", deviceId)
+                            //  TUTORIAL: STEP 3C CODE GOES HERE
 
-                            //  Publish the message to PubNub using the pre-defined channel for this group chat
-                            pubnub.publish(
-                                channel = groupChatChannel,
-                                message = message,
-                                meta = metaInfo
-                            ).async { result, status ->
-                                if (!status.error) {
-                                    Log.v(
-                                        LOG_TAG,
-                                        "Message sent, timetoken: ${result!!.timetoken}"
-                                    )
-                                } else {
-                                    Log.w(LOG_TAG, "Error while publishing")
-                                    status.exception?.printStackTrace()
-                                }
-                            }
                         }, onChange = {})
                 }
             }
@@ -222,12 +204,7 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        //  Subscribe to the pre-defined channel representing this chat group.  This will allow us to receive messages
-        //  and presence events for the channel (what other users are in the room)
-        pubnub.subscribe(
-            channels = listOf(groupChatChannel),
-            withPresence = true
-        )
+        //  TUTORIAL: STEP 3B CODE GOES HERE (1/2)
 
         //  Determine who is currently chatting in the channel.  I use an ArrayList in the viewModel to present this information
         //  on the UI, managed through a couple of addMember and removeMember methods
@@ -341,11 +318,8 @@ class MainActivity : ComponentActivity() {
         if (mLaunchingSettings)
             return
 
-        //  This getting started application is set up to unsubscribe from all channels when the app goes into the background.
-        //  This is good to show the principles of presence but you don't need to do this in a production app if it does not fit your use case.
-        pubnub.unsubscribe(
-            channels = listOf(groupChatChannel)
-        )
+        //  TUTORIAL: STEP 3B CODE GOES HERE (2/2)
+
         pubnub.removeListener(mlistener)
     }
 
