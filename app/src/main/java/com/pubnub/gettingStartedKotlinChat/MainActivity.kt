@@ -152,16 +152,11 @@ class MainActivity : ComponentActivity() {
                         onSent =
                         { message ->
                             //  Code that executes whenever the 'Send' button is pressed
-                            val metaInfo = JsonObject()
-
-                            //  Attach our deviceId as meta info to the message, this is useful in history to know who sent each message
-                            metaInfo.addProperty("deviceId", deviceId)
 
                             //  Publish the message to PubNub using the pre-defined channel for this group chat
                             pubnub.publish(
                                 channel = groupChatChannel,
-                                message = message,
-                                meta = metaInfo
+                                message = message
                             ).async { result, status ->
                                 if (!status.error) {
                                     Log.v(
