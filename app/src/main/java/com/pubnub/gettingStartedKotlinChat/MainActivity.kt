@@ -77,18 +77,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //  Create a device-specific DeviceId to represent this device and user, so PubNub knows who is connecting.
-        //  More info: https://support.pubnub.com/hc/en-us/articles/360051496532-How-do-I-set-the-UUID-
-        //  All Android IDs are user-resettable but are still appropriate for use here.
-        deviceId = Settings.Secure.getString(this.contentResolver, Settings.Secure.ANDROID_ID)
-
-        //  Create PubNub configuration and instantiate the PubNub object, used to communicate with PubNub
-        val config = PNConfiguration(UserId(deviceId)).apply {
-            publishKey = BuildConfig.PUBLISH_KEY
-            subscribeKey = BuildConfig.SUBSCRIBE_KEY
-            logVerbosity = PNLogVerbosity.NONE
-        }
-        pubnub = PubNub(config)
+        //  TUTORIAL: STEP 3A CODE GOES HERE
 
         //  You need to specify a Publish and Subscribe key when configuring PubNub on the device.
         //  This application will load them from your gradle.properties file (See ReadMe for information on obtaining keys)
