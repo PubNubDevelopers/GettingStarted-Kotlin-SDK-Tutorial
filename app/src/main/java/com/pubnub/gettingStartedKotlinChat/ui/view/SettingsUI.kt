@@ -100,6 +100,7 @@ object SettingsUI {
                             publishKey = mPublishKey
                             subscribeKey = mSubscribeKey
                         }
+                        var pubnub = PubNub(config)
 
                         //  TUTORIAL: STEP 3H CODE GOES HERE
 
