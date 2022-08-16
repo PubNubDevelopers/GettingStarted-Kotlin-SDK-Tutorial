@@ -15,7 +15,7 @@ This application is not available on the Play Store but can be built and run loc
 
 ## Features
 
-- [Publish and Subscibe](https://www.pubnub.com/docs/sdks/kotlin/api-reference/publish-and-subscribe) for messages with the PubNub Kotlin SDK
+- [Publish and Subscribe](https://www.pubnub.com/docs/sdks/kotlin/api-reference/publish-and-subscribe) for messages with the PubNub Kotlin SDK
 - Use [Presence](https://www.pubnub.com/docs/sdks/kotlin/api-reference/presence) APIs to determine who is currently chatting
 - The [History](https://www.pubnub.com/docs/sdks/kotlin/api-reference/storage-and-playback#history) API will retrieve past messages for users newly joining the chat
 - Assign a 'friendly name' to yourself which will be available to others via the PubNjub [Object](https://www.pubnub.com/docs/sdks/kotlin/api-reference/objects) storage APIs
