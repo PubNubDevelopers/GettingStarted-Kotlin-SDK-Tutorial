@@ -85,7 +85,7 @@ object SettingsUI {
                 Button(onClick = {
                     //  User has pressed the 'Save' button.  Do two things:
                     //  1. Return the new friendly name to the Main Activity (this is just for convenience).  Note: we were invoked with StartActivityForResult
-                    //  2. Persist the friendly name in PubNub object storage (this is the master record)
+                    //  2. Persist the friendly name in PubNub App Context storage (this is the master record)
                     var returnIntent = Intent()
                     returnIntent.putExtra("friendly_name", text.text)
                     activity.setResult(Activity.RESULT_OK, returnIntent)
@@ -100,7 +100,7 @@ object SettingsUI {
                             publishKey = mPublishKey
                             subscribeKey = mSubscribeKey
                         }
-                        //  Mapping of DeviceId to friendly name.  Master record is PubNub object storage
+                        //  Mapping of DeviceId to friendly name.  Master record is PubNub App Context storage
                         //  https://www.pubnub.com/docs/sdks/kotlin/api-reference/objects
                         var pubnub = PubNub(config)
                         pubnub.setUUIDMetadata(

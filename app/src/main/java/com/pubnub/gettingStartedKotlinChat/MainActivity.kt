@@ -173,8 +173,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        //  In order to receive object UUID events (in the addListener) it is required to set our
-        //  membership using the Object API.
+        //  In order to receive App Context UUID events (in the addListener) it is required to set our
+        //  membership using the App Context API.
         pubnub.setMemberships(
             channels = listOf(
                 PNChannelMembership.Partial(channelId = groupChatChannel)
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
 
     //  This application is designed to unsubscribe from the channel when it goes to the background and re-subscribe
     //  when it comes to the foreground.  This is a fairly common design pattern.  In production, you would probably
-    //  also use a native push message to alert the user whenever there are missed messages.  For more information
+    //  also use a native mobile push message to alert the user whenever there are missed messages.  For more information
     //  see https://www.pubnub.com/tutorials/push-notifications/
     override fun onResume() {
         super.onResume()
@@ -321,12 +321,12 @@ class MainActivity : ComponentActivity() {
 
             }
 
-            //  Whenever Object meta data is changed, an Object event is received.
+            //  Whenever App Context meta data is changed, an App Context event is received.
             //  See: https://www.pubnub.com/docs/chat/sdks/users/setup
             //  Use this to be notified when other users change their friendly names
             override fun objects(pubnub: PubNub, objectEvent: PNObjectEventResult) {
                 if (objectEvent.extractedMessage.type.equals("uuid")) {
-                    Log.d(LOG_TAG, "objects callback with " + objectEvent.extractedMessage)
+                    Log.d(LOG_TAG, "App Context callback with " + objectEvent.extractedMessage)
                     val extractedMessage: PNSetUUIDMetadataEventMessage =
                         objectEvent.extractedMessage as PNSetUUIDMetadataEventMessage
                     replaceMemberName(
@@ -379,9 +379,9 @@ class MainActivity : ComponentActivity() {
             chatViewModel.groupMemberDeviceIds.remove(deviceId)
     }
 
-    //  The 'master record' for each device's friendly name is stored in PubNub Object storage.
+    //  The 'master record' for each device's friendly name is stored in PubNub App Context storage.
     //  This avoids the application defining its own server storage or trying to keep track of all
-    //  friendly names on every device.  Since PubNub Objects understand the concept of a user name
+    //  friendly names on every device.  Since PubNub App Context understands the concept of a user name
     //  (along with other common fields like email and profileUrl), it makes the process straight forward
     private fun lookupMemberName(deviceId: String) {
         //  Resolve the friendly name of the DeviceId
